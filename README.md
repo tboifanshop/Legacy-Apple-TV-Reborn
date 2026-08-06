@@ -1,1 +1,1 @@
-# AppleTVLauncher
+# Legacy Apple TV Reborn
