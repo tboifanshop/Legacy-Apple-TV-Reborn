@@ -14,6 +14,7 @@ static const NSUInteger ATLNormalMethodLimitPerClass = 80;
 static const NSUInteger ATLPriorityMethodLimitPerClass = 220;
 static const NSUInteger ATLProtocolMethodLimit = 120;
 static const NSUInteger ATLClassLimitPerPrefix = 120;
+static const NSUInteger ATLMaxReportCharacters = 900000;
 
 @implementation ATLRuntimeDiagnostics
 
@@ -143,6 +144,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
                                                         truncationInfo:truncationInfo];
 
     for (NSString *prefix in prefixes) {
+        if ([self _isReportLimitReached:report section:@"[4] Prefixed classes"]) {
+            return;
+        }
+
         NSArray *classes = classesByPrefix[prefix];
         if (![classes isKindOfClass:[NSArray class]]) {
             classes = @[];
@@ -162,6 +167,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
         }
 
         for (NSString *className in classes) {
+            if ([self _isReportLimitReached:report section:@"[4] Prefixed classes loop"]) {
+                return;
+            }
+
             [self _appendClassDetailsForName:className
                                     toReport:report
                          methodLimitInstance:ATLNormalMethodLimitPerClass
@@ -226,6 +235,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
 
     [report appendFormat:@"Protocols matched: %lu\n\n", (unsigned long)protocols.count];
     for (Protocol *protocol in protocols) {
+        if ([self _isReportLimitReached:report section:@"[3] Protocols"]) {
+            return;
+        }
+
         [self _appendProtocolDetails:protocol toReport:report methodLimit:ATLProtocolMethodLimit];
     }
 
@@ -241,6 +254,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
 
     [report appendFormat:@"All bundles: %lu\n", (unsigned long)allBundles.count];
     for (NSBundle *bundle in allBundles) {
+        if ([self _isReportLimitReached:report section:@"[2] allBundles"]) {
+            return;
+        }
+
         if (![bundle isKindOfClass:[NSBundle class]]) {
             continue;
         }
@@ -253,6 +270,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
 
     [report appendFormat:@"Framework bundles: %lu\n", (unsigned long)allFrameworks.count];
     for (NSBundle *bundle in allFrameworks) {
+        if ([self _isReportLimitReached:report section:@"[2] allFrameworks"]) {
+            return;
+        }
+
         if (![bundle isKindOfClass:[NSBundle class]]) {
             continue;
         }
@@ -288,6 +309,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
     [report appendFormat:@"Loaded images: %u\n", imageCount];
 
     for (uint32_t i = 0; i < imageCount; i++) {
+        if ([self _isReportLimitReached:report section:@"[1] dyld images"]) {
+            return;
+        }
+
         const char *imageName = _dyld_get_image_name(i);
         NSString *resolvedName = @"(null)";
         if (imageName != NULL) {
@@ -361,6 +386,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
     ];
 
     for (NSString *className in priorityClasses) {
+        if ([self _isReportLimitReached:report section:@"[6] Priority deep diagnostics"]) {
+            return;
+        }
+
         [self _appendClassDetailsForName:className
                                 toReport:report
                      methodLimitInstance:ATLPriorityMethodLimitPerClass
@@ -412,6 +441,10 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
      ];
 
      for (NSDictionary *entry in checks) {
+            if ([self _isReportLimitReached:report section:@"[7] Selector checks"]) {
+                return;
+            }
+
           NSString *className = entry[@"class"];
           if (![className isKindOfClass:[NSString class]] || className.length == 0) {
                 continue;
@@ -441,6 +474,19 @@ static const NSUInteger ATLClassLimitPerPrefix = 120;
 
           [report appendString:@"\n"];
      }
+}
+
++ (BOOL)_isReportLimitReached:(NSMutableString *)report section:(NSString *)section {
+    if (report == nil) {
+        return YES;
+    }
+
+    if (report.length < ATLMaxReportCharacters) {
+        return NO;
+    }
+
+    [report appendFormat:@"TRUNCATED: global report limit (%lu chars) reached at %@\n", (unsigned long)ATLMaxReportCharacters, section ?: @"(unknown)"];
+    return YES;
 }
 
 + (NSDictionary *)_classesByPrefixForPrefixes:(NSArray *)prefixes
