@@ -4,8 +4,6 @@
 #import <objc/message.h>
 #import <mach-o/dyld.h>
 
-#import "../Utilities/ATLLog.h"
-
 static NSString *const ATLRuntimeDiagnosticsLogDir = @"/var/mobile/Library/Logs";
 static NSString *const ATLRuntimeDiagnosticsReportPath = @"/var/mobile/Library/Logs/ATLRuntimeReport.txt";
 static NSString *const ATLRuntimeDiagnosticsModuleVersion = @"2.0.0";
@@ -30,7 +28,7 @@ static const NSUInteger ATLMaxReportCharacters = 900000;
 + (void)_generateRuntimeReport {
     NSMutableString *report = [NSMutableString string];
     if (!report) {
-        ATLLogError(@"Diagnostics: nie mozna utworzyc bufora raportu");
+        NSLog(@"Diagnostics: nie mozna utworzyc bufora raportu");
         return;
     }
 
@@ -73,7 +71,7 @@ static const NSUInteger ATLMaxReportCharacters = 900000;
                                                                attributes:nil
                                                                     error:&dirError];
     if (!created) {
-        ATLLogError(@"Diagnostics: nie mozna utworzyc katalogu logow %@ error=%@", ATLRuntimeDiagnosticsLogDir, dirError);
+        NSLog(@"Diagnostics: nie mozna utworzyc katalogu logow %@ error=%@", ATLRuntimeDiagnosticsLogDir, dirError);
         return;
     }
 
@@ -83,11 +81,11 @@ static const NSUInteger ATLMaxReportCharacters = 900000;
                               encoding:NSUTF8StringEncoding
                                  error:&writeError];
     if (!written) {
-        ATLLogError(@"Diagnostics: nie mozna zapisac raportu %@ error=%@", ATLRuntimeDiagnosticsReportPath, writeError);
+        NSLog(@"Diagnostics: nie mozna zapisac raportu %@ error=%@", ATLRuntimeDiagnosticsReportPath, writeError);
         return;
     }
 
-    ATLLogInfo(@"Diagnostics: raport zapisany do %@", ATLRuntimeDiagnosticsReportPath);
+    NSLog(@"Diagnostics: raport zapisany do %@", ATLRuntimeDiagnosticsReportPath);
 }
 
 + (void)_appendRequiredClassChecksToReport:(NSMutableString *)report {
@@ -324,7 +322,7 @@ static const NSUInteger ATLMaxReportCharacters = 900000;
 
         NSMutableArray *hits = [NSMutableArray array];
         for (NSString *token in importantTokens) {
-            if ([resolvedName rangeOfString:token options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            if ([resolvedName localizedCaseInsensitiveContainsString:token]) {
                 [hits addObject:token];
             }
         }
