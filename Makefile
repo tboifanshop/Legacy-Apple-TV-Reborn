@@ -49,6 +49,7 @@ AppleTVLauncher_FILES = \
 	Settings/ATLSettingsStore.m \
 	Settings/ATLRebornSettingsAppliance.m \
 	Soundtrack/ATLSoundtrackLibrary.m \
+	Soundtrack/ATLSoundtrackDownloadManager.m \
 	Soundtrack/ATLSoundtrackManager.m \
 	WallpaperManager/ATLWallpaperDescriptor.m \
 	WallpaperManager/ATLWallpaperManager.m \

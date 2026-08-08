@@ -21,25 +21,43 @@ If these files are absent, Reborn falls back to a programmatically drawn cursor 
 
 ## Soundtrack
 
-User-supplied audio files belong in:
+### Automatic download (manifest-backed tracks)
 
+Soundtrack entries are declared in:
+```
+/Library/Application Support/LegacyAppleTVReborn/SoundtrackManifest.plist
+```
+
+When a soundtrack is needed, Reborn automatically downloads the audio file
+once and caches it locally at:
 ```
 /var/mobile/Library/LegacyAppleTVReborn/Soundtracks/
 ```
 
-Supported formats: `.m4a`, `.mp3`, `.aac`, `.wav`, `.caf`
+No audio files are bundled in the repository or the package.
 
-**The Frutiger Aero default soundtrack is `GoingUp` ("Going Up" by Stevia Sphere).**
-
-This track is freely available. Download it from Archive.org and place it at:
-```
-/var/mobile/Library/LegacyAppleTVReborn/Soundtracks/GoingUp.mp3
-```
-
-Download URL:
+The Frutiger Aero default soundtrack is **Going Up** by Stevia Sphere,
+downloaded automatically from the Internet Archive on first use:
 ```
 https://ia600700.us.archive.org/16/items/stevia-sphere-tracks-from-soundcloud-01-going-up/Stevia%20Sphere%20-%20Tracks%20From%20Soundcloud%20-%2001%20Going%20Up.mp3
 ```
+Cached at: `/var/mobile/Library/LegacyAppleTVReborn/Soundtracks/GoingUp.mp3`
+
+### User-supplied tracks
+
+You may also place your own audio files directly in the Soundtracks directory:
+```
+/var/mobile/Library/LegacyAppleTVReborn/Soundtracks/
+```
+Supported formats: `.m4a`, `.mp3`, `.aac`, `.wav`, `.caf`
+
+### Kodi
+
+If Kodi is installed, a copy of each downloaded track is also placed in:
+```
+/var/mobile/Library/Application Support/Kodi/userdata/Music/
+```
+so Kodi users can access the track through Kodi's music library.
 
 ## Safe Mode
 

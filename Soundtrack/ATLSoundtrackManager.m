@@ -2,6 +2,7 @@
 //  Legacy Apple TV Reborn
 
 #import "ATLSoundtrackManager.h"
+#import "ATLSoundtrackDownloadManager.h"
 #import "../Theme/ATLThemeManager.h"
 #import "../Settings/ATLSettingsStore.h"
 #import "../Utilities/ATLLog.h"
@@ -17,6 +18,7 @@ static NSString *const ATLSettingsKeyRepeatMode      = @"ATLSoundtrackRepeat";
 @property (nonatomic, assign) BOOL               playing;
 // Index into the library entries (for next/previous navigation).
 @property (nonatomic, assign) NSInteger          currentIndex;
+- (void)_startPlaybackOfEntry:(ATLSoundtrackEntry *)entry;
 @end
 
 @implementation ATLSoundtrackManager
@@ -43,6 +45,39 @@ static NSString *const ATLSettingsKeyRepeatMode      = @"ATLSoundtrackRepeat";
 
 // ---------------------------------------------------------------------------
 - (void)playEntry:(ATLSoundtrackEntry *)entry {
+    if (!entry) return;
+
+    // If the file is already present locally, play it immediately.
+    if ([[ATLSoundtrackDownloadManager sharedManager] isEntryDownloaded:entry]) {
+        [self _startPlaybackOfEntry:entry];
+        return;
+    }
+
+    // Need to download first.  Update state so UI can show a spinner.
+    ATLLogInfo(@"ATLSoundtrackManager: track %@ not cached; queuing download", entry.entryID);
+
+    __weak ATLSoundtrackManager *weakSelf = self;
+    [[ATLSoundtrackDownloadManager sharedManager]
+        downloadEntryIfNeeded:entry
+                     progress:nil
+                   completion:^(ATLSoundtrackEntry *e, BOOL success, NSError *err) {
+        ATLSoundtrackManager *s = weakSelf;
+        if (!s) return;
+        if (success) {
+            [s _startPlaybackOfEntry:e];
+        } else {
+            ATLLogError(@"ATLSoundtrackManager: download failed for %@: %@", e.entryID, err);
+            // Fall back to next track if available, silently.
+            NSArray<ATLSoundtrackEntry *> *entries =
+                [[ATLSoundtrackLibrary sharedLibrary] entries];
+            if (entries.count > 1) {
+                [s skipNext];
+            }
+        }
+    }];
+}
+
+- (void)_startPlaybackOfEntry:(ATLSoundtrackEntry *)entry {
     if (!entry.filePath.length) return;
     [self _stopPlayer];
 
