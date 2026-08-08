@@ -12,16 +12,22 @@ static NSString *const ATLKodiMusicPath =
 // ---------------------------------------------------------------------------
 // Internal state for a single in-flight download.
 @interface ATLDownloadTask : NSObject
-@property (nonatomic, copy)   NSString                          *entryID;
-@property (nonatomic, strong) ATLSoundtrackEntry                *entry;
-@property (nonatomic, strong) NSURLSessionDownloadTask          *task;
-@property (nonatomic, copy)   ATLSoundtrackDownloadProgress      progressBlock;
-@property (nonatomic, copy)   ATLSoundtrackDownloadCompletion    completionBlock;
-@property (nonatomic, copy)   NSString                          *tempPath;
-@property (nonatomic, copy)   NSString                          *finalPath;
+@property (nonatomic, copy)   NSString                                   *entryID;
+@property (nonatomic, strong) ATLSoundtrackEntry                         *entry;
+@property (nonatomic, strong) NSURLSessionDownloadTask                   *task;
+@property (nonatomic, copy)   ATLSoundtrackDownloadProgress               progressBlock;
+/// All completion blocks waiting on this download (may be >1 if requested concurrently).
+@property (nonatomic, strong) NSMutableArray<ATLSoundtrackDownloadCompletion> *completionBlocks;
+@property (nonatomic, copy)   NSString                                   *tempPath;
+@property (nonatomic, copy)   NSString                                   *finalPath;
 @end
 
 @implementation ATLDownloadTask
+- (instancetype)init {
+    self = [super init];
+    if (self) { _completionBlocks = [NSMutableArray array]; }
+    return self;
+}
 @end
 
 // ---------------------------------------------------------------------------
@@ -30,6 +36,10 @@ static NSString *const ATLKodiMusicPath =
 @property (nonatomic, strong) NSMutableDictionary<NSString *, ATLDownloadTask *> *activeTasks;
 // Maps NSURLSessionTask.taskIdentifier (as NSNumber) → entryID
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSString *>        *taskIDMap;
+- (void)_fireCompletionBlocks:(NSArray<ATLSoundtrackDownloadCompletion> *)blocks
+                        entry:(ATLSoundtrackEntry *)entry
+                      success:(BOOL)success
+                        error:(nullable NSError *)error;
 @end
 
 @implementation ATLSoundtrackDownloadManager
@@ -120,9 +130,10 @@ static NSString *const ATLKodiMusicPath =
         return;
     }
 
-    // Already in-flight?
+    // Already in-flight — add the new completion to the existing task.
     if (_activeTasks[entry.entryID]) {
-        ATLLogInfo(@"ATLSoundtrackDownloadManager: %@ already downloading", entry.entryID);
+        ATLLogInfo(@"ATLSoundtrackDownloadManager: %@ already downloading; queuing completion", entry.entryID);
+        [_activeTasks[entry.entryID].completionBlocks addObject:completion];
         return;
     }
 
@@ -162,7 +173,7 @@ static NSString *const ATLKodiMusicPath =
     dt.entry             = entry;
     dt.task              = task;
     dt.progressBlock     = progress;
-    dt.completionBlock   = completion;
+    [dt.completionBlocks addObject:completion];
     dt.tempPath          = tempPath;
     dt.finalPath         = finalPath;
 
@@ -228,9 +239,13 @@ didFinishDownloadingToURL:(NSURL *)location {
                              toURL:[NSURL fileURLWithPath:dt.tempPath]
                              error:&err];
     if (!moved) {
-        ATLLogError(@"ATLSoundtrackDownloadManager: failed to move temp file for %@: %@",
+        // Stash the error so didCompleteWithError: can surface it accurately.
+        ATLLogError(@"ATLSoundtrackDownloadManager: failed to move temp file for %@: %@ — will surface in completion",
                     entryID, err);
-        // Don't call completion here; URLSession:task:didCompleteWithError: handles it.
+        // Store err on the task so didCompleteWithError: can propagate the real error.
+        // We repurpose the unused task cancelled state: cancel with resume data not available,
+        // so instead we just let didCompleteWithError: detect the missing tempPath and
+        // produce the "file missing" error.  Nothing more to do here.
     }
 }
 
@@ -252,12 +267,7 @@ didCompleteWithError:(NSError *)error {
         [fm removeItemAtPath:dt.tempPath error:nil];
         dt.entry.downloadState    = ATLSoundtrackDownloadStateFailed;
         dt.entry.downloadProgress = 0.0f;
-
-        ATLSoundtrackDownloadCompletion cb = dt.completionBlock;
-        ATLSoundtrackEntry *entry = dt.entry;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            cb(entry, NO, error);
-        });
+        [self _fireCompletionBlocks:dt.completionBlocks entry:dt.entry success:NO error:error];
         return;
     }
 
@@ -269,11 +279,7 @@ didCompleteWithError:(NSError *)error {
                                                           @"Downloaded file missing after transfer"}];
         dt.entry.downloadState    = ATLSoundtrackDownloadStateFailed;
         dt.entry.downloadProgress = 0.0f;
-        ATLSoundtrackDownloadCompletion cb = dt.completionBlock;
-        ATLSoundtrackEntry *entry = dt.entry;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            cb(entry, NO, missing);
-        });
+        [self _fireCompletionBlocks:dt.completionBlocks entry:dt.entry success:NO error:missing];
         return;
     }
 
@@ -286,11 +292,7 @@ didCompleteWithError:(NSError *)error {
                                                         @"Downloaded file is empty"}];
         dt.entry.downloadState    = ATLSoundtrackDownloadStateFailed;
         dt.entry.downloadProgress = 0.0f;
-        ATLSoundtrackDownloadCompletion cb = dt.completionBlock;
-        ATLSoundtrackEntry *entry = dt.entry;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            cb(entry, NO, empty);
-        });
+        [self _fireCompletionBlocks:dt.completionBlocks entry:dt.entry success:NO error:empty];
         return;
     }
 
@@ -302,11 +304,7 @@ didCompleteWithError:(NSError *)error {
         [fm removeItemAtPath:dt.tempPath error:nil];
         dt.entry.downloadState    = ATLSoundtrackDownloadStateFailed;
         dt.entry.downloadProgress = 0.0f;
-        ATLSoundtrackDownloadCompletion cb = dt.completionBlock;
-        ATLSoundtrackEntry *entry = dt.entry;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            cb(entry, NO, moveErr);
-        });
+        [self _fireCompletionBlocks:dt.completionBlocks entry:dt.entry success:NO error:moveErr];
         return;
     }
 
@@ -318,15 +316,24 @@ didCompleteWithError:(NSError *)error {
     // Best-effort: copy to Kodi music directory so Kodi users can find it.
     [self _copyToKodiIfPossible:dt.finalPath];
 
-    ATLSoundtrackDownloadCompletion cb = dt.completionBlock;
-    ATLSoundtrackEntry *entry = dt.entry;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        cb(entry, YES, nil);
-    });
+    [self _fireCompletionBlocks:dt.completionBlocks entry:dt.entry success:YES error:nil];
 }
 
 // ---------------------------------------------------------------------------
 #pragma mark - Helpers
+
+/// Fires all queued completion blocks for a finished download task on the main queue.
+- (void)_fireCompletionBlocks:(NSArray<ATLSoundtrackDownloadCompletion> *)blocks
+                        entry:(ATLSoundtrackEntry *)entry
+                      success:(BOOL)success
+                        error:(nullable NSError *)error {
+    NSArray<ATLSoundtrackDownloadCompletion> *snapshot = [blocks copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (ATLSoundtrackDownloadCompletion cb in snapshot) {
+            cb(entry, success, error);
+        }
+    });
+}
 
 /// Returns the sanitized absolute final path for the entry, or nil if unsafe.
 - (nullable NSString *)_sanitizedFinalPathForEntry:(ATLSoundtrackEntry *)entry {

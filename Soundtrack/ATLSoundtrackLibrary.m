@@ -151,9 +151,6 @@ static NSString *const ATLSoundtrackManifestPath =
         if ([fm fileExistsAtPath:e.filePath]) {
             e.downloadState    = ATLSoundtrackDownloadStateDownloaded;
             e.downloadProgress = 1.0f;
-        } else if (e.downloadURL.length) {
-            e.downloadState    = ATLSoundtrackDownloadStateNotDownloaded;
-            e.downloadProgress = 0.0f;
         } else {
             e.downloadState    = ATLSoundtrackDownloadStateNotDownloaded;
             e.downloadProgress = 0.0f;

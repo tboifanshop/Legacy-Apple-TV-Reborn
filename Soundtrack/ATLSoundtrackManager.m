@@ -101,10 +101,10 @@ static NSString *const ATLSettingsKeyRepeatMode      = @"ATLSoundtrackRepeat";
 
     // Find index in library for skip navigation.
     NSArray *entries = [[ATLSoundtrackLibrary sharedLibrary] entries];
-    _currentIndex = [entries indexOfObjectPassingTest:^BOOL(ATLSoundtrackEntry *e, NSUInteger i, BOOL *stop) {
+    NSUInteger found = [entries indexOfObjectPassingTest:^BOOL(ATLSoundtrackEntry *e, NSUInteger i, BOOL *stop) {
         return [e.entryID isEqualToString:entry.entryID];
     }];
-    if (_currentIndex == (NSInteger)NSNotFound) _currentIndex = -1;
+    _currentIndex = (found == NSNotFound) ? -1 : (NSInteger)found;
 
     ATLLogInfo(@"ATLSoundtrackManager: playing %@", entry.entryID);
 }

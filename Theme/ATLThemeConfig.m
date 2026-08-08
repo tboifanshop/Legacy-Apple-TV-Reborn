@@ -53,7 +53,7 @@ NSString *const ATLThemeIDFrutigerAero  = @"com.legacyappletvreborn.theme.frutig
     cfg.tileCornerRadius     = 10.0f;
     cfg.shelfBannersHidden   = YES;
     cfg.isBypassMode         = NO;
-    // Wii U GamePad Mii Editing — user supplies the audio file; never bundled.
+    // Going Up by Stevia Sphere — downloaded automatically on first use via ATLSoundtrackDownloadManager.
     cfg.defaultSoundtrackName = @"GoingUp";
     return cfg;
 }
