@@ -28,6 +28,7 @@ TWEAK_NAME = AppleTVLauncher
 AppleTVLauncher_FILES = \
 	Hooks/LauncherHooks.x \
 	Utilities/ATLLog.m \
+	Theme/ATLThemeEngine.m \
 	Launcher/ATLAppItem.m \
 	Launcher/ATLLauncherState.m \
 	Launcher/ATLLauncherAppGridView.m \
