@@ -35,7 +35,15 @@ static NSString *const ATLWorkerBaseURL = @"https://atv-worker.tboifanshop.worke
     NSURLSessionDataTask *task = [_session dataTaskWithURL:url completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
         NSInteger status = [resp isKindOfClass:[NSHTTPURLResponse class]] ? [(NSHTTPURLResponse *)resp statusCode] : -1;
         ATLLogInfo(@"ATLDriveWorkerClient: fetch %@ status=%ld", remotePath, (long)status);
-        dispatch_async(dispatch_get_main_queue(), ^{ completion(data, err); });
+        // Only pass data to the caller on HTTP 2xx; otherwise surface an error.
+        NSError *callbackError = err;
+        NSData  *callbackData  = data;
+        if (!callbackError && (status < 200 || status > 299)) {
+            callbackError = [NSError errorWithDomain:@"ATLDrive" code:status
+                userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"HTTP %ld", (long)status]}];
+            callbackData = nil;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(callbackData, callbackError); });
     }];
     [task resume];
 }

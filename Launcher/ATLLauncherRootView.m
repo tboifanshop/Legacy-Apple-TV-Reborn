@@ -1,5 +1,6 @@
 #import "ATLLauncherRootView.h"
-#import "../Theme/ATLThemeEngine.h"
+#import "../Theme/ATLThemeManager.h"
+#import "../Theme/ATLThemeConfig.h"
 #import "../Utilities/ATLLog.h"
 
 @interface ATLLauncherRootView ()
@@ -17,30 +18,28 @@
 }
 
 - (void)_buildSubviews {
-    ATLThemeEngine *theme = [ATLThemeEngine sharedEngine];
-    [theme styleRootView:self];
+    self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.72f];
 
-    // Minimal status bar label
     _statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(16, 8, 300, 24)];
     _statusLabel.text      = @"Legacy Apple TV Reborn";
-    _statusLabel.textColor = ATLColorTextSecondary();
-    _statusLabel.font      = [theme bodyFont];
+    _statusLabel.textColor = [UIColor colorWithWhite:0.8f alpha:1.0f];
+    _statusLabel.font      = [UIFont systemFontOfSize:14.0f];
     [self addSubview:_statusLabel];
 }
 
 - (void)layoutForBounds:(CGRect)bounds {
     self.frame = bounds;
     _statusLabel.frame = CGRectMake(16, 8, bounds.size.width - 32, 24);
-
-    // Refresh gradient size
-    ATLThemeEngine *theme = [ATLThemeEngine sharedEngine];
-    [theme applyBackgroundGradientToLayer:self.layer];
 }
 
 - (void)applyTheme {
-    ATLThemeEngine *theme = [ATLThemeEngine sharedEngine];
-    [theme styleRootView:self];
-    ATLLogInfo(@"ATLLauncherRootView: theme applied");
+    ATLThemeConfig *cfg = [ATLThemeManager sharedManager].activeTheme;
+    if (cfg.isBypassMode) {
+        self.hidden = YES;
+    } else {
+        self.hidden = NO;
+    }
+    ATLLogInfo(@"ATLLauncherRootView: theme applied (%@)", cfg.displayName);
 }
 
 @end

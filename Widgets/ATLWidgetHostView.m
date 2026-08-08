@@ -1,5 +1,4 @@
 #import "ATLWidgetHostView.h"
-#import "../Theme/ATLThemeEngine.h"
 #import "../Utilities/ATLLog.h"
 
 @interface ATLWidgetHostView ()
@@ -22,8 +21,9 @@
     [self.widgets addObject:widget];
     UIView *wv = [widget widgetView];
     if (wv) {
+        wv.layer.cornerRadius  = 10.0f;
+        wv.layer.masksToBounds = YES;
         [self addSubview:wv];
-        [[ATLThemeEngine sharedEngine] styleCardView:wv cornerRadius:10.0f];
     }
     if ([widget respondsToSelector:@selector(widgetDidBecomeActive)]) {
         [widget widgetDidBecomeActive];

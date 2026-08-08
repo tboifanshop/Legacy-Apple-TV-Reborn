@@ -2,9 +2,11 @@
 #import "ATLLauncherState.h"
 #import "ATLAppItem.h"
 #import "../Theme/ATLThemeEngine.h"
+#import "../Theme/ATLGlassOverlayView.h"
+#import "../Theme/ATLThemeManager.h"
 #import "../Utilities/ATLLog.h"
 
-static const CGFloat kATLCellSize   = 120.0f;
+static const CGFloat kATLCellSize    = 120.0f;
 static const CGFloat kATLCellSpacing = 16.0f;
 
 @interface ATLAppCellView : UIView
@@ -18,8 +20,9 @@ static const CGFloat kATLCellSpacing = 16.0f;
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        ATLThemeEngine *theme = [ATLThemeEngine sharedEngine];
-        [theme styleCardView:self cornerRadius:14.0f];
+        self.layer.cornerRadius  = 10.0f;
+        self.layer.masksToBounds = YES;
+        self.backgroundColor     = [UIColor colorWithWhite:0.1f alpha:0.6f];
 
         _iconView = [[UIImageView alloc] initWithFrame:CGRectMake(12, 12, 96, 72)];
         _iconView.contentMode = UIViewContentModeScaleAspectFit;
@@ -27,12 +30,19 @@ static const CGFloat kATLCellSpacing = 16.0f;
 
         _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(4, 88, frame.size.width - 8, 20)];
         _nameLabel.textAlignment = NSTextAlignmentCenter;
-        _nameLabel.textColor     = ATLColorTextPrimary();
-        _nameLabel.font          = [theme badgeFont];
+        _nameLabel.textColor     = [UIColor whiteColor];
+        _nameLabel.font          = [[ATLThemeEngine sharedEngine] badgeFont];
         _nameLabel.adjustsFontSizeToFitWidth = YES;
         [self addSubview:_nameLabel];
 
-        [theme applyShimmerToLayer:self.layer];
+        // Add glass overlay via ATLGlassOverlayView
+        ATLThemeConfig *cfg = [ATLThemeManager sharedManager].activeTheme;
+        if (!cfg.isBypassMode && cfg.glassAlpha > 0.01f) {
+            ATLGlassOverlayView *glass = [[ATLGlassOverlayView alloc] initWithFrame:self.bounds config:cfg];
+            glass.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            glass.userInteractionEnabled = NO;
+            [self addSubview:glass];
+        }
     }
     return self;
 }
@@ -71,15 +81,15 @@ static const CGFloat kATLCellSpacing = 16.0f;
     NSArray<ATLAppItem *> *visible = [self.state.apps filteredArrayUsingPredicate:
         [NSPredicate predicateWithFormat:@"isHidden == NO"]];
 
-    CGFloat x = kATLCellSpacing;
-    CGFloat y = kATLCellSpacing;
-    CGFloat rowHeight = kATLCellSize + kATLCellSpacing;
+    CGFloat x    = kATLCellSpacing;
+    CGFloat y    = kATLCellSpacing;
+    CGFloat rowH = kATLCellSize + kATLCellSpacing;
     CGFloat maxX = self.bounds.size.width - kATLCellSpacing;
 
     for (ATLAppItem *item in visible) {
         if (x + kATLCellSize > maxX) {
             x  = kATLCellSpacing;
-            y += rowHeight;
+            y += rowH;
         }
         ATLAppCellView *cell = [[ATLAppCellView alloc]
             initWithFrame:CGRectMake(x, y, kATLCellSize, kATLCellSize)];

@@ -14,7 +14,8 @@
 
 - (void)animateFocusOnView:(UIView *)view {
     if (!view) return;
-    [[ATLThemeEngine sharedEngine] applyFocusRingToLayer:view.layer];
+    UIColor *ringColor = [UIColor colorWithWhite:1.0f alpha:0.8f];
+    [[ATLThemeEngine sharedEngine] applyFocusRingToLayer:view.layer color:ringColor];
     [UIView animateWithDuration:0.18 animations:^{
         view.transform = CGAffineTransformMakeScale(1.06f, 1.06f);
     }];
@@ -28,15 +29,17 @@
     }];
 }
 
-- (void)animateTransitionToView:(UIView *)toView fromView:(UIView *)fromView completion:(void(^)(void))completion {
+- (void)animateTransitionToView:(UIView *)toView
+                       fromView:(UIView *)fromView
+                     completion:(void(^)(void))completion {
     if (!toView) { if (completion) completion(); return; }
     toView.alpha = 0.0f;
     [UIView animateWithDuration:0.30
                           delay:0.0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-        fromView.alpha = 0.0f;
-        toView.alpha   = 1.0f;
+        if (fromView) fromView.alpha = 0.0f;
+        toView.alpha = 1.0f;
     } completion:^(BOOL finished) {
         if (completion) completion();
         ATLLogInfo(@"ATLAnimationCoordinator: transition complete");
