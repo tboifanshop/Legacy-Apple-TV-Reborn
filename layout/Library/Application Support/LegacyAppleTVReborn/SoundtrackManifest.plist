@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <!-- ================================================================
+             Going Up — Stevia Sphere
+             Source: Internet Archive (archive.org)
+             License: Free to use; original track by Stevia Sphere.
+             ================================================================ -->
+        <key>entryID</key>
+        <string>GoingUp</string>
+
+        <key>displayName</key>
+        <string>Going Up</string>
+
+        <key>downloadURL</key>
+        <string>https://ia600700.us.archive.org/16/items/stevia-sphere-tracks-from-soundcloud-01-going-up/Stevia%20Sphere%20-%20Tracks%20From%20Soundcloud%20-%2001%20Going%20Up.mp3</string>
+
+        <key>localFileName</key>
+        <string>GoingUp.mp3</string>
+
+        <key>licenseInfo</key>
+        <string>Going Up by Stevia Sphere. Hosted on the Internet Archive. Free to use.</string>
+    </dict>
+</array>
+</plist>

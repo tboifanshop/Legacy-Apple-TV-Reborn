@@ -10,6 +10,9 @@ ATL_RUNTIME_ONLY ?= 0
 
 include $(THEOS)/makefiles/common.mk
 
+# ---------------------------------------------------------------------------
+# ATL_RUNTIME_ONLY=1 — diagnostic-only probe (not production)
+# ---------------------------------------------------------------------------
 ifeq ($(ATL_RUNTIME_ONLY),1)
 
 TWEAK_NAME = ATLRuntimeProbe
@@ -23,11 +26,20 @@ ATLRuntimeProbe_FRAMEWORKS = Foundation
 
 else
 
+# ---------------------------------------------------------------------------
+# Default: production AppleTVLauncher
+# ---------------------------------------------------------------------------
 TWEAK_NAME = AppleTVLauncher
 
 AppleTVLauncher_FILES = \
 	Hooks/LauncherHooks.x \
 	Utilities/ATLLog.m \
+	SafeMode/ATLSafeMode.m \
+	Theme/ATLThemeConfig.m \
+	Theme/ATLThemeManager.m \
+	Theme/ATLThemeEngine.m \
+	Theme/ATLGlassOverlayView.m \
+	Theme/ATLFocusCursorView.m \
 	Launcher/ATLAppItem.m \
 	Launcher/ATLLauncherState.m \
 	Launcher/ATLLauncherAppGridView.m \
@@ -35,6 +47,10 @@ AppleTVLauncher_FILES = \
 	Launcher/ATLLauncherRootView.m \
 	Animations/ATLAnimationCoordinator.m \
 	Settings/ATLSettingsStore.m \
+	Settings/ATLRebornSettingsAppliance.m \
+	Soundtrack/ATLSoundtrackLibrary.m \
+	Soundtrack/ATLSoundtrackDownloadManager.m \
+	Soundtrack/ATLSoundtrackManager.m \
 	WallpaperManager/ATLWallpaperDescriptor.m \
 	WallpaperManager/ATLWallpaperManager.m \
 	VideoPlayer/ATLVideoPlayerService.m \
@@ -43,7 +59,7 @@ AppleTVLauncher_FILES = \
 	Widgets/ATLWidgetHostView.m
 
 AppleTVLauncher_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
-AppleTVLauncher_FRAMEWORKS = Foundation UIKit CoreGraphics QuartzCore AVFoundation
+AppleTVLauncher_FRAMEWORKS = Foundation UIKit CoreGraphics QuartzCore AVFoundation AudioToolbox
 
 endif
 
