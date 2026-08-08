@@ -29,13 +29,16 @@ User-supplied audio files belong in:
 
 Supported formats: `.m4a`, `.mp3`, `.aac`, `.wav`, `.caf`
 
-**The Frutiger Aero default soundtrack is `WiiU_MiiEditing` (Wii U GamePad – Mii Editing).
-This audio file is NOT bundled — it is copyrighted by Nintendo.
-Users who own the Wii U must supply the file themselves.**
+**The Frutiger Aero default soundtrack is `GoingUp` ("Going Up" by Stevia Sphere).**
 
-Place the file at:
+This track is freely available. Download it from Archive.org and place it at:
 ```
-/var/mobile/Library/LegacyAppleTVReborn/Soundtracks/WiiU_MiiEditing.m4a
+/var/mobile/Library/LegacyAppleTVReborn/Soundtracks/GoingUp.mp3
+```
+
+Download URL:
+```
+https://ia600700.us.archive.org/16/items/stevia-sphere-tracks-from-soundcloud-01-going-up/Stevia%20Sphere%20-%20Tracks%20From%20Soundcloud%20-%2001%20Going%20Up.mp3
 ```
 
 ## Safe Mode

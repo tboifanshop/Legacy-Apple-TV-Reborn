@@ -54,7 +54,7 @@ NSString *const ATLThemeIDFrutigerAero  = @"com.legacyappletvreborn.theme.frutig
     cfg.shelfBannersHidden   = YES;
     cfg.isBypassMode         = NO;
     // Wii U GamePad Mii Editing — user supplies the audio file; never bundled.
-    cfg.defaultSoundtrackName = @"WiiU_MiiEditing";
+    cfg.defaultSoundtrackName = @"GoingUp";
     return cfg;
 }
 
